@@ -2,24 +2,26 @@ package org.jenkinsci.plugins.slave_setup;
 
 import antlr.ANTLRException;
 import hudson.Extension;
+import hudson.FilePath;
 import hudson.Util;
 import hudson.model.AbstractDescribableImpl;
 import hudson.model.Describable;
 import hudson.model.Descriptor;
+import hudson.model.TaskListener;
 import hudson.model.labels.LabelAtom;
 import hudson.model.labels.LabelExpression;
 import org.apache.commons.lang.StringUtils;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 import java.io.File;
+import java.util.ArrayList;
 
 /**
  * Represents a setup config for one set of labels. It may have its own prepare script, files to copy and command line.
  */
 public class SetupConfigItem extends AbstractDescribableImpl<SetupConfigItem> {
 
-
-    private String preLaunchScript;
+    public static final String DELIMITER = "¼";
 
     /**
      * the prepare script code
@@ -51,13 +53,16 @@ public class SetupConfigItem extends AbstractDescribableImpl<SetupConfigItem> {
      */
     private boolean prepareScriptExecuted = false;
 
+
+    /**
+
     /**
      * Constructor uesd to create the setup config instance
      *
      */
     @DataBoundConstructor
-    public SetupConfigItem(String preLaunchScript, String prepareScript, File filesDir, String commandLine, boolean deployNow, String assignedLabelString) {
-        this.preLaunchScript = preLaunchScript;
+    public SetupConfigItem(String prepareScript, File filesDir, String commandLine, boolean deployNow, 
+    String assignedLabelString) {
         this.prepareScript = prepareScript;
         this.filesDir = filesDir;
         this.commandLine = commandLine;
@@ -71,13 +76,6 @@ public class SetupConfigItem extends AbstractDescribableImpl<SetupConfigItem> {
     public SetupConfigItem() {
     }
 
-    public String getPreLaunchScript() {
-        return preLaunchScript;
-    }
-
-    public void setPreLaunchScript(String preLaunchScript) {
-        this.preLaunchScript = preLaunchScript;
-    }
 
     /**
      * Returns the prepare script code.
@@ -204,5 +202,19 @@ public class SetupConfigItem extends AbstractDescribableImpl<SetupConfigItem> {
         public String getDisplayName() {
             return "";
         }
+    }
+
+    /**
+     * Every ConfigItem have and unic identifier for content which will match with slave hashCode
+     */
+    public int hashCode(){
+        return (prepareScript + filesDir + commandLine).hashCode();
+    }
+
+    /**
+     * Usefull funtion to get same name as needs to be under slave cache.
+     */
+    public String remoteCache(){
+        return this.assignedLabelString + SetupConfigItem.DELIMITER + this.hashCode();
     }
 }
